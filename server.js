@@ -39,6 +39,8 @@ dbConnection();
 // Express App
 const app = express();
 
+app.set('trust proxy', 1);
+
 // Serve Static Uploads
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
