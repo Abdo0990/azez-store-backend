@@ -24,7 +24,7 @@ exports.signup = asyncHandler(async (req, res, next) => {
 
     const hashedPassword = await bcrypt.hash(password, 12);
 
-    // 3) Atomic Upsert: Update if exists or Create new one (Prevents Race Conditions)
+    // 3) Atomic Upsert: Update if exists or Create new one
     await PendingUser.findOneAndUpdate(
         { email },
         {
@@ -35,7 +35,7 @@ exports.signup = asyncHandler(async (req, res, next) => {
             verificationCode: hashedCode,
             verificationCodeExpires: Date.now() + 10 * 60 * 1000,
         },
-        { upsert: true, new: true, setDefaultsOnInsert: true }
+        { upsert: true, returnDocument: 'after', setDefaultsOnInsert: true }
     );
 
     // 4) Send Email
@@ -55,8 +55,9 @@ exports.signup = asyncHandler(async (req, res, next) => {
             html: message,
         });
     } catch (error) {
+        console.error('❌ Nodemailer Error Details:', error);
         await PendingUser.deleteOne({ email });
-        return next(new ApiError('There was an error sending the verification email. Please try again later.', 500));
+        return next(new ApiError(`فشل في إرسال بريد التفعيل: ${error.message || 'خطأ في خادم البريد'}`, 500));
     }
 
     res.status(200).json({
