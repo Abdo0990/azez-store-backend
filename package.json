@@ -30,6 +30,7 @@
     "node-cache": "^5.1.2",
     "nodemailer": "^9.0.5",
     "nodemon": "^3.1.14",
+    "resend": "^6.25.0",
     "slugify": "^1.6.9",
     "winston": "^3.19.0"
   }
