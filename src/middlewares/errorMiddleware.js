@@ -11,35 +11,41 @@ const handleCastErrorDB = (err) =>
     new ApiError(`Invalid value '${err.value}' for field: ${err.path}`, 400);
 
 const handleDuplicateFieldsDB = (err) => {
-    const field = Object.keys(err.keyValue)[0];
+    const field = Object.keys(err.keyValue || {})[0] || 'field';
     return new ApiError(`Duplicate field value for '${field}'. Please use another value.`, 400);
 };
 
-const handleSyntaxError = () =>
-    new ApiError('Invalid JSON payload provided. Please check request body syntax.', 400);
-
 const globalError = (err, req, res, next) => {
-    err.statusCode = err.statusCode || 500;
-    err.status = err.status || 'error';
+    let error = { ...err };
+    error.message = err.message;
+    error.name = err.name;
+    error.statusCode = err.statusCode || 500;
+    error.status = err.status || 'error';
 
-    // تسجيل أي خطأ سيرفر 500 تلقائياً في ملف error.log
-    if (err.statusCode === 500) {
-        logger.error(`${err.statusCode} - ${err.message} - ${req.originalUrl} - ${req.method} - ${req.ip}`, {
+    // معالجة أخطاء JWT و Mongoose وتحويلها إلى Status Codes صحيحة
+    if (error.name === 'JsonWebTokenError') error = handleJwtInvalidSignature();
+    if (error.name === 'TokenExpiredError') error = handleJwtExpired();
+    if (error.name === 'CastError') error = handleCastErrorDB(error);
+    if (error.code === 11000) error = handleDuplicateFieldsDB(error);
+
+    // تسجيل أخطاء السيرفر 500
+    if (error.statusCode === 500 && logger) {
+        logger.error(`${error.statusCode} - ${error.message} - ${req.originalUrl} - ${req.method} - ${req.ip}`, {
             stack: err.stack,
         });
     }
 
     if (process.env.NODE_ENV === 'development') {
-        res.status(err.statusCode).json({
-            status: err.status,
+        res.status(error.statusCode).json({
+            status: error.status,
             error: err,
-            message: err.message,
+            message: error.message,
             stack: err.stack,
         });
     } else {
-        res.status(err.statusCode).json({
-            status: err.status,
-            message: err.message,
+        res.status(error.statusCode).json({
+            status: error.status,
+            message: error.message,
         });
     }
 };
