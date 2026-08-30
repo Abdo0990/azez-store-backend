@@ -1,25 +1,22 @@
 const nodemailer = require('nodemailer');
 
 const sendEmail = async (options) => {
-    const port = Number(process.env.EMAIL_PORT) || 587;
-    const isSecure = port === 465;
-
-    // 1) Create transporter with timeouts
+    // إجبار الاتصال على IPv4 ومنفذ 587 لتفادي حظر شبكات Render
     const transporter = nodemailer.createTransport({
-        service: 'gmail', // يحدد تلقائياً أفضل إعدادات لـ Gmail
-        host: process.env.EMAIL_HOST || 'smtp.gmail.com',
-        port: port,
-        secure: isSecure,
+        host: 'smtp.gmail.com',
+        port: 587,
+        secure: false, // false لاستخدام STARTTLS على منفذ 587
+        requireTLS: true,
+        family: 4, // إجبار الاتصال عبر IPv4 لمنع خطأ ENETUNREACH
         auth: {
             user: process.env.EMAIL_USER,
             pass: process.env.EMAIL_PASSWORD,
         },
-        connectionTimeout: 10000, // 10 ثوانٍ كحد أقصى لتجنب تعليق الطلب
-        greetingTimeout: 10000,
-        socketTimeout: 15000,
+        connectionTimeout: 15000,
+        greetingTimeout: 15000,
+        socketTimeout: 20000,
     });
 
-    // 2) Define email options
     const mailOptions = {
         from: `"Azez Store" <${process.env.EMAIL_USER}>`,
         to: options.email,
@@ -27,7 +24,6 @@ const sendEmail = async (options) => {
         html: options.html || options.message,
     };
 
-    // 3) Send email
     await transporter.sendMail(mailOptions);
 };
 
