@@ -1,9 +1,13 @@
 const NodeCache = require('node-cache');
 
-// إنشاء Cache لمدة افتراضية 10 دقائق
-const cache = new NodeCache({ stdTTL: 600, checkperiod: 120 });
+// تعطيل useClones لتخزين البيانات بأعلى كفاءة وبدون أخطاء Cloned Mongoose Documents
+const cache = new NodeCache({
+    stdTTL: 600,
+    checkperiod: 120,
+    useClones: false
+});
 
-// تفريغ الكاش بناءً على بادئة الـ Key (مثلاً: تفريغ كل كاش الفئات عند تعديل فئة)
+// تفريغ الكاش بناءً على بادئة الـ Key
 const clearCacheByPrefix = (prefix) => {
     const keys = cache.keys();
     const matchingKeys = keys.filter((key) => key.startsWith(prefix));

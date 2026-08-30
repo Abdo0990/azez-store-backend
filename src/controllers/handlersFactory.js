@@ -27,7 +27,7 @@ exports.updateOne = (Model, cachePrefix = '') =>
     asyncHandler(async (req, res, next) => {
         const { id } = req.params;
         const document = await Model.findByIdAndUpdate(id, req.body, {
-            new: true,
+            returnDocument: 'after',
             runValidators: true,
         });
 
@@ -68,7 +68,7 @@ exports.getOne = (Model, populationOpt, cachePrefix = '') =>
             return res.status(200).json(cache.get(cacheKey));
         }
 
-        let query = Model.findById(id);
+        let query = Model.findById(id).lean();
         if (populationOpt) {
             query = query.populate(populationOpt);
         }
@@ -96,7 +96,6 @@ exports.getAll = (Model, modelName = '', cachePrefix = '') =>
             filter = req.filterObj;
         }
 
-        // إنشاء مفتاح كاش فريد بناءً على الـ Query String
         const queryString = JSON.stringify(req.query || {});
         const filterString = JSON.stringify(filter || {});
         const cacheKey = cachePrefix ? `${cachePrefix}_all_${filterString}_${queryString}` : null;
@@ -107,7 +106,7 @@ exports.getAll = (Model, modelName = '', cachePrefix = '') =>
 
         const totalDocumentsCount = await Model.countDocuments(filter);
 
-        const apiFeatures = new ApiFeatures(Model.find(filter), req.query)
+        const apiFeatures = new ApiFeatures(Model.find(filter).lean(), req.query)
             .paginate(totalDocumentsCount)
             .filter()
             .search(modelName)
