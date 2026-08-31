@@ -1,30 +1,33 @@
-const nodemailer = require('nodemailer');
-
 const sendEmail = async (options) => {
-    // إجبار الاتصال على IPv4 ومنفذ 587 لتفادي حظر شبكات Render
-    const transporter = nodemailer.createTransport({
-        host: 'smtp.gmail.com',
-        port: 587,
-        secure: false, // false لاستخدام STARTTLS على منفذ 587
-        requireTLS: true,
-        family: 4, // إجبار الاتصال عبر IPv4 لمنع خطأ ENETUNREACH
-        auth: {
-            user: process.env.EMAIL_USER,
-            pass: process.env.EMAIL_PASSWORD,
+    const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+        method: 'POST',
+        headers: {
+            'accept': 'application/json',
+            'api-key': process.env.BREVO_API_KEY,
+            'content-type': 'application/json',
         },
-        connectionTimeout: 15000,
-        greetingTimeout: 15000,
-        socketTimeout: 20000,
+        body: JSON.stringify({
+            sender: {
+                name: 'Azez Store',
+                email: process.env.BREVO_SENDER_EMAIL, // البريد الذي سجلت به حساب Brevo
+            },
+            to: [
+                {
+                    email: options.email,
+                },
+            ],
+            subject: options.subject,
+            htmlContent: options.html || options.message,
+        }),
     });
 
-    const mailOptions = {
-        from: `"Azez Store" <${process.env.EMAIL_USER}>`,
-        to: options.email,
-        subject: options.subject,
-        html: options.html || options.message,
-    };
+    const data = await response.json();
 
-    await transporter.sendMail(mailOptions);
+    if (!response.ok) {
+        throw new Error(data.message || 'Failed to send email via Brevo');
+    }
+
+    return data;
 };
 
 module.exports = sendEmail;
