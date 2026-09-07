@@ -38,24 +38,32 @@ reviewSchema.pre(/^find/, function () {
 
 // دالة حساب المتوسط وتحديث موديل الخدمة
 reviewSchema.statics.calcAverageRatingsAndQuantity = async function (serviceId) {
+    if (!serviceId) return;
+
+    // تحويل الـ ID لـ ObjectId لضمان نجاح المطابقة في الـ Aggregation
+    const targetServiceId = new mongoose.Types.ObjectId(serviceId.toString());
+
     const result = await this.aggregate([
-        { $match: { service: serviceId } },
+        {
+            $match: { service: targetServiceId }
+        },
         {
             $group: {
                 _id: '$service',
-                avgRatings: { $avg: '$ratings' },
+                // دعم حقلي ratings أو rating في حال اختلاف التسمية
+                avgRatings: { $avg: { $ifNull: ['$ratings', '$rating'] } },
                 ratingsQuantity: { $sum: 1 },
             },
         },
     ]);
 
     if (result.length > 0) {
-        await Service.findByIdAndUpdate(serviceId, {
+        await Service.findByIdAndUpdate(targetServiceId, {
             ratingsAverage: Math.round(result[0].avgRatings * 10) / 10,
             ratingsQuantity: result[0].ratingsQuantity,
         });
     } else {
-        await Service.findByIdAndUpdate(serviceId, {
+        await Service.findByIdAndUpdate(targetServiceId, {
             ratingsAverage: 0,
             ratingsQuantity: 0,
         });
