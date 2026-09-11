@@ -9,6 +9,7 @@ const {
     updateCategory,
     deleteCategory,
     createFilterObj,
+    reorderCategories,
 } = require('../controllers/categoryController');
 
 const {
@@ -45,6 +46,9 @@ const optionalAuth = async (req, res, next) => {
 };
 
 router.use('/:categoryId/services', serviceRoute);
+
+// مسار إعادة الترتيب السريع لكل الأقسام دفعة واحدة (للأدمن فقط)
+router.put('/reorder', protect, allowedTo('admin'), reorderCategories);
 
 router
     .route('/')

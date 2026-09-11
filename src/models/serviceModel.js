@@ -50,6 +50,11 @@ const serviceSchema = new mongoose.Schema(
             type: Boolean,
             default: true,
         },
+        // حقل الترتيب داخل القسم (الرقم الأقل يظهر أولاً)
+        order: {
+            type: Number,
+            default: 0,
+        },
         ratingsAverage: {
             type: Number,
             min: [0, 'Rating must be above or equal 0'],
@@ -64,8 +69,8 @@ const serviceSchema = new mongoose.Schema(
     { timestamps: true }
 );
 
-// فهارس تسريع الفرز والبحث حسب القسم والسعر والتقييم
-serviceSchema.index({ category: 1, isAvailable: 1 });
+// فهارس تسريع الفرز والبحث حسب القسم والترتيب والسعر والتقييم
+serviceSchema.index({ category: 1, order: 1, isAvailable: 1, createdAt: -1 });
 serviceSchema.index({ price: 1 });
 serviceSchema.index({ ratingsAverage: -1 });
 

@@ -32,6 +32,7 @@ const settingRoute = require('./src/routes/settingRoutes');
 const orderRoute = require('./src/routes/orderRoutes');
 const reviewRoute = require('./src/routes/reviewRoutes');
 const storeReviewRoutes = require('./src/routes/storeReviewRoutes');
+const wishlistRoute = require('./src/routes/wishlistRoutes');
 
 // Connect to Database
 dbConnection();
@@ -109,6 +110,7 @@ app.use('/api/v1/settings', settingRoute);
 app.use('/api/v1/orders', orderRoute);
 app.use('/api/v1/reviews', reviewRoute);
 app.use('/api/v1/store-reviews', storeReviewRoutes);
+app.use('/api/v1/wishlist', wishlistRoute);
 
 // Handle Unhandled Routes
 app.use((req, res, next) => {
@@ -118,9 +120,9 @@ app.use((req, res, next) => {
 // Global Error Handling Middleware
 app.use(globalError);
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT;
 const server = app.listen(PORT, () => {
-    logger.info(`Server is running on port ${PORT} in ${process.env.NODE_ENV || 'development'} mode`);
+    logger.info(`Server is working `);
 });
 
 // Handle Rejections Outside Express

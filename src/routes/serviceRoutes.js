@@ -9,6 +9,7 @@ const {
     updateService,
     deleteService,
     createFilterObj,
+    reorderServices,
 } = require('../controllers/serviceController');
 
 const {
@@ -47,7 +48,11 @@ const optionalAuth = async (req, res, next) => {
 // 2) Nested Route للتقييمات
 router.use('/:serviceId/reviews', reviewRoute);
 
-// 3) المسارات العامة والخاصة بالخدمات
+// 3) مسار إعادة الترتيب السريع للخدمات (للأدمن فقط)
+// موضوع قبل مسار /:id حتى لا يتم اعتبار كلمة reorder كمعرف
+router.put('/reorder', protect, allowedTo('admin'), reorderServices);
+
+// 4) المسارات العامة والخاصة بالخدمات
 router
     .route('/')
     .get(optionalAuth, createFilterObj, getServices)

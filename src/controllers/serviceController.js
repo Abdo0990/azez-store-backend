@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const Service = require('../models/serviceModel');
 const factory = require('./handlersFactory');
 const asyncHandler = require('express-async-handler');
@@ -12,6 +13,12 @@ exports.createFilterObj = (req, res, next) => {
         filterObject.isAvailable = true;
     }
     req.filterObj = filterObject;
+
+    // الفرز الافتراضي: حسب حقل order تصاعدياً ثم تاريخ الإنشاء
+    if (!req.query.sort) {
+        req.query.sort = 'order,createdAt';
+    }
+
     next();
 };
 
@@ -55,4 +62,29 @@ exports.deleteService = asyncHandler(async (req, res, next) => {
     clearCacheByPrefix('services');
 
     res.status(204).send();
+});
+
+// ميزة إعادة ترتيب الخدمات داخل القسم دفعة واحدة (Bulk Update)
+// تستقبل مصفوفة: [{ id: "...", order: 1 }, { id: "...", order: 2 }]
+exports.reorderServices = asyncHandler(async (req, res, next) => {
+    const { orders } = req.body;
+
+    if (!Array.isArray(orders)) {
+        return next(new ApiError('Orders must be an array of objects containing id and order', 400));
+    }
+
+    const bulkOps = orders.map((item) => ({
+        updateOne: {
+            filter: { _id: new mongoose.Types.ObjectId(item.id) },
+            update: { $set: { order: Number(item.order) } },
+        },
+    }));
+
+    await Service.bulkWrite(bulkOps);
+    clearCacheByPrefix('services');
+
+    res.status(200).json({
+        success: true,
+        message: 'Services reordered successfully',
+    });
 });
